@@ -133,9 +133,10 @@ def train_GAN(params):
     '''
     XTL ... Training data labelled
     XTU ... Training data unlabelled
-    XV  ... Validation data
+    
     XL  ... Labelled data
     XU  ... Unlabelled data
+    XV  ... Validation data
     '''    
     
     dset_L = params['dset_L']
@@ -155,10 +156,8 @@ def train_GAN(params):
         XV, YV = pp.get_data(params,dset_V)
     
     XTL = pp.scale_minmax(XTL)
-    XTL, YTL = pp.get_tensor(XTL, YTL)
-    
     XTU = pp.scale_minmax(XTU)
-    XTU, YTU = pp.get_tensor(XTU, YTU)
+    
     
     XV = pp.scale_minmax(XV)
     XV, YV = pp.get_tensor(XV, YV)
@@ -177,7 +176,6 @@ def train_GAN(params):
     # -------------------  
     
     if(params['prediction']):
-        print(XTU.shape[0])
         Y_pred = torch.zeros(XTU.shape[0],8)
         
     # -------------------
@@ -312,7 +310,7 @@ def train_GAN(params):
                     #  Classify unlabelled data
                     # -------------------
                     optimizer_C.zero_grad()
-                    X2, _ = iter_UL.get_next()
+                    X2 = iter_UL.get_next()[0]
                     Y2 = C(X2)
                     W2 = torch.cat((X2,Y2),dim=1)
 
@@ -340,7 +338,7 @@ def train_GAN(params):
                     # -------------------
                     #  Train the discriminator to label fake positive samples
                     # -------------------
-                    X4, _ = iter_UL.get_next()
+                    X4 = iter_UL.get_next()[0]
                     Y4 = C(X4)
                     W4 = torch.cat((X4,Y4),dim=1)
                     
@@ -495,7 +493,9 @@ def train_GAN(params):
         
         if(params['prediction']):
             C.hard = False
-            Y_pred += C(XTU).cpu().detach()
+            XP = pp.get_tensor(XTU,None)[0]
+            YP = C(XP)
+            Y_pred += YP.cpu().detach()
             C.hard = True
             
     # -------------------
