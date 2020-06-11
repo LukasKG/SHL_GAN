@@ -22,8 +22,10 @@ def train(params,data=None):
         
         dset_L          -       Dataset used as labelled data
         dset_U          -       Dataset used as unlabelled data
-        ratio_L         -       Ratio of training samples used as labelled data
-        ratio_U         -       Ratio of valdiation samples used as unlabelled data
+        dset_V          -       Dataset used as validation, if None, dset_U is used
+        ratio_L         -       Ratio of labelled samples used
+        ratio_U         -       Ratio of unlabelled samples used
+        ratio_V         -       Ratio of validation samples used
         
         FX_sel          -       List of features to apply to the sliding window
         Location        -       Which body locations (bag, hand, hips, torso, or all)
@@ -184,23 +186,23 @@ def bmark_LR_G(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Generator Optimiser"""
     net = 'G'
     lst_1 = [0.0012,0.00125,0.0013]
-    lst_2 = [0.5,0.55,0.6,0.625]
+    lst_2 = [0.2,0.4,0.6]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
 def bmark_LR_D(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Discriminator Optimiser"""
     net = 'D'
-    lst_1 = [0.00112,0.01125,0.00113]
-    lst_2 = [0.75,0.8,0.85]
+    lst_1 = [0.011125,0.01125,0.01137]
+    lst_2 = [0.65,0.7,0.75]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
 def bmark_LR_C(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Classifier Optimiser"""
     net = 'C'
-    lst_1 = [0.0025,0.003,0.0035]
-    lst_2 = [0.985,0.99,0.995]
+    lst_1 = [0.0005,0.00225,0.0025]
+    lst_2 = [0.9,0.985,0.99,0.995]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
@@ -271,16 +273,14 @@ def basic():
  
     train(params=params)
 
-
-
 def main():
     # test()
     # test_cross()
     # basic()
     
     # bmark_LR_G(last_bmark=0)
-    bmark_LR_D(last_bmark=0)
-    # bmark_LR_C(last_bmark=0)
+    # bmark_LR_D(last_bmark=0)
+    bmark_LR_C(last_bmark=0)
     
 
 if __name__ == "__main__":

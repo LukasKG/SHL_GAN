@@ -24,8 +24,11 @@ DEFAULT_PARAMS = {
         
         'dset_L'          : 'validation',
         'dset_U'          : 'validation',
+        'dset_V'          : None,
         'ratio_L'         : 1.0,
         'ratio_U'         : 1.0,  
+        'ratio_V'         : 1.0, 
+        
         'FX_sel'          : 'basic',
         'location'        : 'hips',
         
@@ -44,10 +47,10 @@ DEFAULT_PARAMS = {
         'R_active'        : True,
         
         'GLR'             : 0.00125,
-        'GB1'             : 0.6,
+        'GB1'             : 0.2,
         'GB2'             : 0.999,
         'DLR'             : 0.001125,
-        'DB1'             : 0.8,
+        'DB1'             : 0.7,
         'DB2'             : 0.999,
         'CLR'             : 0.0025,
         'CB1'             : 0.99,
@@ -127,23 +130,31 @@ def train_GAN(params):
     #  Data scaling
     # -------------------
     '''
-    XT ... Training data
-    XV ... Validation data
-    XL ... Labelled data
-    XU ... Unlabelled data
+    XTL ... Training data labelled
+    XTU ... Training data unlabelled
+    XV  ... Validation data
+    XL  ... Labelled data
+    XU  ... Unlabelled data
     '''    
     
     dset_L = params['dset_L']
     dset_U = params['dset_U']
+    dset_V = params['dset_V']
     
     if dset_L == dset_U:
         X, Y = pp.get_data(params,dset_L)
-        XT, XV, YT, YV = pp.split_data(X,Y)
+        XTL, XTU, YTL, YTU = pp.split_data(X,Y)
     else:
-        XT, YT = pp.get_data(params,dset_L)
-        XV, YV = pp.get_data(params,dset_U)
-       
-    XT = pp.scale_minmax(XT)
+        XTL, YTL = pp.get_data(params,dset_L)
+        XTU, YTU = pp.get_data(params,dset_U)
+    
+    if dset_V is None:
+        XV, YV = XTU, YTU
+    else:
+        XV, YV = pp.get_data(params,dset_V)
+    
+    XTL = pp.scale_minmax(XTL)
+    XTU = pp.scale_minmax(XTU)
     XV = pp.scale_minmax(XV)
     XV, YV = pp.get_tensor(XV, YV)
     
@@ -156,7 +167,6 @@ def train_GAN(params):
     if(params['R_active']):
         mat_accuracy_R = network.load_R_Acc(params)
         
-    
     # -------------------
     #  Start Training
     # -------------------
@@ -172,7 +182,7 @@ def train_GAN(params):
         #  Labelled Data
         # -------------------
         
-        XL, YL = XT, YT
+        XL, YL = XTL, YTL
         
         if params['ratio_L'] < 1.0:
             XL, YL = pp.select_random(XL,YL,params['ratio_L'])
@@ -191,7 +201,8 @@ def train_GAN(params):
         #  Unlabelled Data
         # -------------------
         
-        XU, YU = XV, YV
+        XU, YU = XTU, YTU
+        
         if params['ratio_U'] < 1.0:
             XU, YU = pp.select_random(XU,YU,params['ratio_U'])
             log("Selected %s of validation samples."%( format(params['ratio_U'],'0.2f') ),name=params['log_name'])
