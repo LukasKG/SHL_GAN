@@ -59,7 +59,10 @@ def load_data(params,dataset):
     Labels Y (optional, otherwise None)
 
     '''
-    location = params['location']
+    if dataset == 'test':
+        location = 'test'
+    else:
+        location = params['location']
     FX_sel = params['FX_sel']
     
     assert dataset in ['test','train','validation']
@@ -93,10 +96,10 @@ def load_data(params,dataset):
             log("Generating dataset..",name=params['log_name'])
             generate_data(dataset,location,FX_sel)
         
-        data = pd.read_csv(path+'data.txt').to_numpy()
+        data = pd.read_csv(path+'data.txt',header=None).to_numpy()
         
         if os.path.isfile(path+'label.txt'):
-            label = pd.read_csv(path+'label.txt').to_numpy()
+            label = pd.read_csv(path+'label.txt',header=None).to_numpy()
         else:
             label = None
     

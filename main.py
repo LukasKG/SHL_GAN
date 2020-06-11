@@ -29,6 +29,7 @@ def train(params,data=None):
         
         FX_sel          -       List of features to apply to the sliding window
         Location        -       Which body locations (bag, hand, hips, torso, or all)
+        prediction      -       True: creates a file containing the prediction for the validation data
         
         oversampling    -       True: oversample all minority classes
         batch_size      -       Number of samples per batch
@@ -208,7 +209,7 @@ def bmark_LR_C(last_bmark=0):
 
 def test():
     name = "test"    
-    network.clear(name)
+    # network.clear(name)
     
     params = get_params(
             name = name,
@@ -216,7 +217,8 @@ def test():
             location = 'hips',
 
             dset_L = 'validation',
-            dset_U = 'validation',
+            dset_U = 'test',
+            dset_V = 'train',
             ratio_L = 0.33,
             ratio_U = 0.33,
         
@@ -274,13 +276,13 @@ def basic():
     train(params=params)
 
 def main():
-    # test()
+    test()
     # test_cross()
     # basic()
     
     # bmark_LR_G(last_bmark=0)
     # bmark_LR_D(last_bmark=0)
-    bmark_LR_C(last_bmark=0)
+    # bmark_LR_C(last_bmark=0)
     
 
 if __name__ == "__main__":

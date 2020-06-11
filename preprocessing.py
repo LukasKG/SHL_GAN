@@ -77,10 +77,11 @@ def get_tensor(X, Y):
     else:
         device = torch.device('cpu')
     
-    tensor_x = torch.from_numpy(X).float().to(device)
-    tensor_y = torch.from_numpy(Y).float().to(device)
+    X = torch.from_numpy(X).float().to(device)
+    if Y is not None:
+        Y = torch.from_numpy(Y).float().to(device)
     
-    return tensor_x, tensor_y
+    return X, Y
 
 class Permanent_Dataloader:
     def __init__(self, dataloader):
@@ -102,7 +103,10 @@ def get_dataloader(params,X,Y):
         X, Y = get_tensor(X,Y)
     
     # create your datset
-    dataset = torch.utils.data.TensorDataset(X,Y)
+    if Y is not None:
+        dataset = torch.utils.data.TensorDataset(X,Y)
+    else:
+        dataset = torch.utils.data.TensorDataset(X)
     
     # Configure data loader
     dataloader = torch.utils.data.DataLoader(

@@ -31,6 +31,7 @@ DEFAULT_PARAMS = {
         
         'FX_sel'          : 'basic',
         'location'        : 'hips',
+        'prediction'      : True,
         
         'oversampling'    : True,
         'batch_size'      : 128,
@@ -154,7 +155,11 @@ def train_GAN(params):
         XV, YV = pp.get_data(params,dset_V)
     
     XTL = pp.scale_minmax(XTL)
+    XTL, YTL = pp.get_tensor(XTL, YTL)
+    
     XTU = pp.scale_minmax(XTU)
+    XTU, YTU = pp.get_tensor(XTU, YTU)
+    
     XV = pp.scale_minmax(XV)
     XV, YV = pp.get_tensor(XV, YV)
     
@@ -166,6 +171,14 @@ def train_GAN(params):
 
     if(params['R_active']):
         mat_accuracy_R = network.load_R_Acc(params)
+        
+    # -------------------
+    #  Final prediction
+    # -------------------  
+    
+    if(params['prediction']):
+        print(XTU.shape[0])
+        Y_pred = torch.zeros(XTU.shape[0],8)
         
     # -------------------
     #  Start Training
@@ -192,7 +205,7 @@ def train_GAN(params):
         log("Number of labelled samples = %d."%( count_L ),name=params['log_name'])
         if params['oversampling']:
             XL, YL = pp.over_sampling(params, XL, YL)
-            log("Oversampling: created %d new samples."%( YL.shape[0]-count_L ),name=params['log_name'])
+            log("Oversampling: created %d new samples."%( XL.shape[0]-count_L ),name=params['log_name'])
         
         dataloader = pp.get_dataloader(params, XL, YL)
         
@@ -207,7 +220,7 @@ def train_GAN(params):
             XU, YU = pp.select_random(XU,YU,params['ratio_U'])
             log("Selected %s of validation samples."%( format(params['ratio_U'],'0.2f') ),name=params['log_name'])
         
-        log("Number of unlabelled samples = %d."%( YU.shape[0] ),name=params['log_name'])
+        log("Number of unlabelled samples = %d."%( XU.shape[0] ),name=params['log_name'])
 
         iter_UL = pp.get_perm_dataloader(params, XU, YU)
         
@@ -457,15 +470,15 @@ def train_GAN(params):
         # Generate Synthetic Data
         Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
         IV = torch.cat((Z,YV),dim=1)
-        XG = G(IV)
+        XG = G(IV).detach()
         
         # Classify Validation data
-        PC = C(XV)
+        PC = C(XV).detach()
         if params['R_active']:
             if RF == None:
                 RF = R(XV)
             else:
-                RF = torch.cat((RF, R(XV)), 0)
+                RF = torch.cat((RF, R(XV).detach()), 0)
             
         if XF == None:
             XF = XG
@@ -476,6 +489,15 @@ def train_GAN(params):
             YF = torch.cat((YF, YV), 0)
             PF = torch.cat((PF, PC), 0)
         
+        # -------------------
+        #  Final prediction
+        # -------------------  
+        
+        if(params['prediction']):
+            C.hard = False
+            Y_pred += C(XTU).cpu().detach()
+            C.hard = True
+            
     # -------------------
     #  Post Training
     # -------------------
@@ -570,7 +592,18 @@ def train_GAN(params):
         RF = pp.one_hot_to_labels(params,RF)
         con_mat = confusion_matrix(YF, RF, labels=None, sample_weight=None, normalize='true')
         plot_confusion_matrix(con_mat,params,name='R',title='Confusion matrix')
-
+    
+    # -------------------
+    #  Final prediction
+    # -------------------  
+    
+    if(params['prediction']):
+        pred = torch.argmax(Y_pred,axis=1)        
+        f = open(network.S_PATH+params['name']+'_predictions.txt', "w")
+        for y in pred:
+            f.write(' '.join(['%.6f'%(float(y.item()+1))]*500)+'\n')
+        f.close()
+    
     # -------------------
     #  Log Results
     # -------------------
