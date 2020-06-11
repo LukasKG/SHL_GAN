@@ -16,6 +16,9 @@ os.makedirs("pic", exist_ok=True)
 M_PATH = 'models/'
 os.makedirs("models", exist_ok=True)
 
+S_PATH = 'prediction/'
+os.makedirs("prediction", exist_ok=True)
+
 # File format for vector graphics
 FILE_FORMAT_V = '.pdf'
 

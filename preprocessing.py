@@ -69,7 +69,7 @@ def get_data(params,dataset):
         Y = labels_to_one_hot(params,Y)
     return X,Y
 
-def get_tensor(X, Y):    
+def get_tensor(X, Y=None):    
     cuda = True if torch.cuda.is_available() else False
     
     if cuda:

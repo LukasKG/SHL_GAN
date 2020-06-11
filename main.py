@@ -209,7 +209,7 @@ def bmark_LR_C(last_bmark=0):
 
 def test():
     name = "test"    
-    # network.clear(name)
+    network.clear(name)
     
     params = get_params(
             name = name,
@@ -221,17 +221,18 @@ def test():
             dset_V = 'train',
             ratio_L = 0.33,
             ratio_U = 0.33,
+            ratio_V = 0.2,
         
             runs=3,
             epochs=6,
             save_step=3,
 
-            oversampling = False,
+            oversampling = True,
 
             G_label_sample = True,
             G_label_factor = 1,
             C_basic_train = True ,
-            R_active = False,
+            R_active = True,
             
             G_no = 1,
             D_no = 1,
