@@ -32,6 +32,7 @@ DEFAULT_PARAMS = {
         'FX_sel'          : 'basic',
         'location'        : 'hips',
         'prediction'      : True,
+        'pretrain'        : None,
         
         'oversampling'    : True,
         'batch_size'      : 128,
@@ -47,14 +48,14 @@ DEFAULT_PARAMS = {
         'C_basic_train'   : True,
         'R_active'        : True,
         
-        'GLR'             : 0.00125,
+        'GLR'             : 0.0013,
         'GB1'             : 0.2,
         'GB2'             : 0.999,
         'DLR'             : 0.001125,
         'DB1'             : 0.7,
         'DB2'             : 0.999,
-        'CLR'             : 0.0025,
-        'CB1'             : 0.99,
+        'CLR'             : 0.00225,
+        'CB1'             : 0.9,
         'CB2'             : 0.999,
         }
 
@@ -160,6 +161,9 @@ def train_GAN(params):
     
     
     XV = pp.scale_minmax(XV)
+    if params['ratio_V'] < 1.0:
+        XV, YV = pp.select_random(XV,YV,params['ratio_L'])
+        log("Selected %s of validation samples."%( format(params['ratio_V'],'0.2f') ),name=params['log_name'])
     XV, YV = pp.get_tensor(XV, YV)
     
     # -------------------
@@ -182,13 +186,13 @@ def train_GAN(params):
     #  Start Training
     # -------------------
     
+    XF = None
+    YF = None
+    PF = None
+    RF = None
+    
     for run in range(params['runs']):
-        
-        XF = None
-        YF = None
-        PF = None
-        RF = None
-        
+
         # -------------------
         #  Labelled Data
         # -------------------
@@ -197,7 +201,7 @@ def train_GAN(params):
         
         if params['ratio_L'] < 1.0:
             XL, YL = pp.select_random(XL,YL,params['ratio_L'])
-            log("Selected %s of training samples."%( format(params['ratio_L'],'0.2f') ),name=params['log_name'])
+            log("Selected %s of labelled samples."%( format(params['ratio_L'],'0.2f') ),name=params['log_name'])
         
         count_L = YL.shape[0]
         log("Number of labelled samples = %d."%( count_L ),name=params['log_name'])
@@ -216,7 +220,7 @@ def train_GAN(params):
         
         if params['ratio_U'] < 1.0:
             XU, YU = pp.select_random(XU,YU,params['ratio_U'])
-            log("Selected %s of validation samples."%( format(params['ratio_U'],'0.2f') ),name=params['log_name'])
+            log("Selected %s of unlabelled samples."%( format(params['ratio_U'],'0.2f') ),name=params['log_name'])
         
         log("Number of unlabelled samples = %d."%( XU.shape[0] ),name=params['log_name'])
 
@@ -402,12 +406,11 @@ def train_GAN(params):
                 log(logString,save=False,name=params['log_name'])
                 
                 if (epoch+1)%params['save_step'] == 0:
-                    # log("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~|",save=False,name=params['log_name'])
                     idx = run,int(epoch/params['save_step'])+1
                     
                     # Predict labels
                     PV = C(XV)
-                    
+
                     if params['R_active']:
                         PR = R(XV)
                         mat_accuracy_R[idx] = get_accuracy(PR, YV)
@@ -418,7 +421,6 @@ def train_GAN(params):
                     Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
                     IV = torch.cat((Z,YV),dim=1)
                     XG = G(IV)
-                    
                     
                     # Estimate Discriminator Accuracy
                     WV1 = torch.cat((XV,YV),dim=1)
@@ -453,8 +455,6 @@ def train_GAN(params):
                     params['start_epoch'] = epoch+1
                     network.save_Parameter(params)
                     network.save_Acc(params, mat_accuracy_G, mat_accuracy_D, mat_accuracy_C)
-                                
-                    # log("~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~-~|",save=False,name=params['log_name'])
             
             # End of Training Run
             params['start_run'] = run+1
@@ -468,10 +468,10 @@ def train_GAN(params):
         # Generate Synthetic Data
         Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
         IV = torch.cat((Z,YV),dim=1)
-        XG = G(IV).detach()
+        XG = G(IV)
         
         # Classify Validation data
-        PC = C(XV).detach()
+        PC = C(XV)
         if params['R_active']:
             if RF == None:
                 RF = R(XV)
@@ -535,7 +535,10 @@ def train_GAN(params):
         ax.plot(timeline,acc_R,c=colors[3],linestyle='dashdot')
         legend.append("Accuracy $A_R$")
         
-        perf = (acc_C-acc_R)/acc_R
+        perf = np.zeros_like(acc_C)
+        perf[0] = 0.0
+        perf[1:] = (acc_C[1:]-acc_R[1:])/acc_R[1:]
+
         ax.plot(timeline,perf+1,c=colors[4],linestyle='solid')
         legend.append("Performance $P_C$")
     
@@ -574,7 +577,7 @@ def train_GAN(params):
                 if v2>=v1:
                     adva[i] = j-i
                     break
-                
+
         maxA = np.argmax(adva, axis=0)
         log(' - Biggest Advantage: %d epochs after %d epochs.'%(adva[maxA]*params['save_step'],timeline[maxA]),name='results')  
     

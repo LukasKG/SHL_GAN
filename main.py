@@ -5,6 +5,7 @@ plt.ioff()
 
 from log import log,clear
 from GAN import get_params
+from pre_train import train_C
 
 import network
 import excel
@@ -30,6 +31,7 @@ def train(params,data=None):
         FX_sel          -       List of features to apply to the sliding window
         Location        -       Which body locations (bag, hand, hips, torso, or all)
         prediction      -       True: creates a file containing the prediction for the validation data
+        pretrain        -       If given: Name of the pretrained model to be loaded
         
         oversampling    -       True: oversample all minority classes
         batch_size      -       Number of samples per batch
@@ -149,6 +151,7 @@ def cross_params(net,lst_1,lst_2,last_bmark=0):
             
             dset_L = 'validation',
             dset_U = 'validation',
+            dset_V = 'validation',
             ratio_L = 0.33,
             ratio_U = 0.33,
         
@@ -186,8 +189,8 @@ def cross_params(net,lst_1,lst_2,last_bmark=0):
 def bmark_LR_G(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Generator Optimiser"""
     net = 'G'
-    lst_1 = [0.0012,0.00125,0.0013]
-    lst_2 = [0.2,0.4,0.6]
+    lst_1 = [0.00125,0.0013,0.00135]
+    lst_2 = [0.15,0.2,0.25]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
@@ -202,8 +205,8 @@ def bmark_LR_D(last_bmark=0):
 def bmark_LR_C(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Classifier Optimiser"""
     net = 'C'
-    lst_1 = [0.0005,0.00225,0.0025]
-    lst_2 = [0.9,0.985,0.99,0.995]
+    lst_1 = [0.002125,0.00225,0.00237]
+    lst_2 = [0.7,0.8,0.9]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
@@ -223,7 +226,9 @@ def test():
             ratio_U = 0.33,
             ratio_V = 0.2,
         
-            runs=3,
+            pretrain = 'final',
+        
+            runs=1,
             epochs=6,
             save_step=3,
 
@@ -253,12 +258,16 @@ def basic():
             
             dset_L = 'validation',
             dset_U = 'validation',
-            ratio_L = 0.33,
-            ratio_U = 0.33,
+            dset_V = 'validation',
+            ratio_L = 1.0,
+            ratio_U = 1.0,
+            ratio_V = 1.0,
+        
+            pretrain = 'final',
         
             runs=1,
-            epochs=600,
-            save_step=15,
+            epochs=100,
+            save_step=10,
 
             oversampling = True,
 
@@ -276,10 +285,37 @@ def basic():
  
     train(params=params)
 
+def pretrain():
+    name = 'pretrain'
+    
+    params = get_params(
+        name = name,
+        FX_sel = 'basic',
+        location = 'hips',
+        
+        dset_L = 'train',
+        dset_V = 'validation',
+        ratio_L = 1.00,
+        ratio_V = 1.00,
+    
+        runs=20,
+        epochs=25,
+        save_step=5,
+
+        oversampling = False,
+
+        C_no = 1,
+
+        log_name = 'log')
+ 
+    train_C(params=params)
+    
 def main():
-    test()
+    # test()
     # test_cross()
     # basic()
+    
+    pretrain()
     
     # bmark_LR_G(last_bmark=0)
     # bmark_LR_D(last_bmark=0)

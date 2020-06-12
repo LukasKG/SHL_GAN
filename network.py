@@ -174,21 +174,63 @@ def get_string_name(name,run,model):
         return None
     return '%s_R%d_%s'%(name,run,model)
 
-def save_GAN(name,run,G,D,C):
-    save_Model(get_string_name(name,run,'G'),G)
-    save_Model(get_string_name(name,run,'D'),D)
-    save_Model(get_string_name(name,run,'C'),C)
-
-def save_Ref(name,run,R):
-    save_Model(get_string_name(name,run,'R'),R)
-
 def save_Model(name,model):
     PATH = M_PATH+name+'.pt'
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         torch.save(model, PATH)
 #    log("Saved model "+name)
+
+def save_Ref(name,run,R):
+    save_Model(get_string_name(name,run,'R'),R)
+
+def save_GAN(name,run,G,D,C):
+    save_Model(get_string_name(name,run,'G'),G)
+    save_Model(get_string_name(name,run,'D'),D)
+    save_Model(get_string_name(name,run,'C'),C)
     
+def activate_CUDA(model):
+    if torch.cuda.is_available():
+        model.cuda()
+        device = torch.device('cuda')
+    else:
+        device = torch.device('cpu')
+    return model.to(device)    
+    
+def load_Model(name,params):
+    PATH = M_PATH+name+'.pt'
+    
+    if not os.path.isfile(PATH):
+        log("Model \"%s\" does not exist."%PATH,error=False,name=params['log_name'])
+        return None
+    
+    model = torch.load(PATH)
+    model.eval()
+    
+    log("Loaded model %s."%name,name=params['log_name'])
+    
+    return activate_CUDA(model) 
+    
+def load_Pretrain_C(run,params):
+    PATH = 'pretrain/'+params['pretrain']
+    
+    # Check for a pretrained model for the individual run
+    if os.path.isfile(PATH+'_%d.pt'%run):
+        model = torch.load(PATH+'_%d.pt'%run)
+        log("Loaded pretrained model %s (Run %d)."%(params['pretrain'],run),name=params['log_name'])
+    # Check for a general pretrained model
+    elif os.path.isfile(PATH+'.pt'):
+        model = torch.load(PATH+'.pt')
+        log("Loaded pretrained model %s."%(params['pretrain']),name=params['log_name'])
+    # No pretrained model found
+    else:
+        log("Did not find pretrained model %s."%(params['pretrain']),name=params['log_name'])
+        return None
+    
+    model.eval()
+    
+    return activate_CUDA(model)
+
 def load_Ref(run,params):
     input_size, output_size = pp.get_size(params)
     
@@ -197,7 +239,7 @@ def load_Ref(run,params):
     if R is None:
         R = new_C(run, params, input_size=input_size, hidden_size=128, num_classes=output_size)
         
-    return R
+    return R 
     
 def load_GAN(run,params):
     input_size, output_size = pp.get_size(params)
@@ -213,33 +255,15 @@ def load_GAN(run,params):
         D = new_D(run, params, input_size=input_size+output_size, hidden_size=128)
         
     # Load Classifier
-    C = load_Model(get_string_name(params['name'],run,'C'),params)
+    C = None
+    if params['pretrain'] is not None:
+        C = load_Pretrain_C(run,params)
+    if C is None:
+        C = load_Model(get_string_name(params['name'],run,'C'),params)
     if C is None:
         C = new_C(run, params, input_size=input_size, hidden_size=128, num_classes=output_size)
         
     return G, D, C
-    
-def load_Model(name,params):
-    PATH = M_PATH+name+'.pt'
-    
-    if not os.path.isfile(PATH):
-        log("Model \"%s\" does not exist."%PATH,error=False,name=params['log_name'])
-        return None
-    
-    model = torch.load(PATH)
-    model.eval()
-    
-    log("Loaded model %s."%name,name=params['log_name'])
-    
-    return activate_CUDA(model)
-
-def activate_CUDA(model):
-    if torch.cuda.is_available():
-        model.cuda()
-        device = torch.device('cuda')
-    else:
-        device = torch.device('cpu')
-    return model.to(device)
 
 # -------------------
 #  Clear Model
@@ -305,8 +329,9 @@ def save_R_Acc(params,mat_R):
 def load_R_Acc(params):
     PATH = M_PATH+params['name']+'_acc_R.pt'
     mat_R = np.zeros((params['runs'],int(params['epochs']/params['save_step'])+1))
-    mat_R[:,0] = 1.0/pp.get_size(params)[1]
-
+    #mat_R[:,0] = 1.0/pp.get_size(params)[1]
+    mat_R[:,0] = 0.0
+    
     if not os.path.isfile(PATH):
         log("Could not find accuracies for model \"%s\""%params['name'],name=params['log_name'])
     else:
@@ -325,11 +350,14 @@ def save_Acc(params,mat_G,mat_D,mat_C):
 def load_Acc(params):
     PATH = M_PATH+params['name']+'_acc.pt'
     mat_G = np.zeros((params['runs'],int(params['epochs']/params['save_step'])+1))
-    mat_G[:,0] = 0.5
+    #mat_G[:,0] = 0.5
+    mat_G[:,0] = 0.0
     mat_D = np.zeros((params['runs'],int(params['epochs']/params['save_step'])+1))
-    mat_D[:,0] = 0.5
+    #mat_D[:,0] = 0.5
+    mat_D[:,0] = 0.0
     mat_C = np.zeros((params['runs'],int(params['epochs']/params['save_step'])+1))
-    mat_C[:,0] = 1.0/pp.get_size(params)[1]
+    #mat_C[:,0] = 1.0/pp.get_size(params)[1]
+    mat_C[:,0] = 0.0
 
     if not os.path.isfile(PATH):
         log("Could not find accuracies for model \"%s\""%params['name'],name=params['log_name'])
