@@ -217,14 +217,14 @@ def load_Pretrain_C(run,params):
     # Check for a pretrained model for the individual run
     if os.path.isfile(PATH+'_%d.pt'%run):
         model = torch.load(PATH+'_%d.pt'%run)
-        log("Loaded pretrained model %s (Run %d)."%(params['pretrain'],run),name=params['log_name'])
+        log("Loaded pretrained classifier %s (Run %d)."%(params['pretrain'],run),name=params['log_name'])
     # Check for a general pretrained model
     elif os.path.isfile(PATH+'.pt'):
         model = torch.load(PATH+'.pt')
-        log("Loaded pretrained model %s."%(params['pretrain']),name=params['log_name'])
+        log("Loaded pretrained classifier %s."%(params['pretrain']),name=params['log_name'])
     # No pretrained model found
     else:
-        log("Did not find pretrained model %s."%(params['pretrain']),name=params['log_name'])
+        log("Did not find pretrained classifier %s."%(params['pretrain']),name=params['log_name'])
         return None
     
     model.eval()
@@ -264,7 +264,7 @@ def load_GAN(run,params):
     return G, D, C
 
 # -------------------
-#  Clear Model
+#  Clear
 # -------------------
 
 def clear(name):
@@ -275,6 +275,10 @@ def clear(name):
             cleared = True
     if cleared:
         log("CLEARED MODEL \""+name+"\"",save=False)
+
+def clear_cache():
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
 
 # -------------------
 #  Save/Load Parameters

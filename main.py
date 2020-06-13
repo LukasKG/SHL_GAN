@@ -151,7 +151,7 @@ def cross_params(net,lst_1,lst_2,last_bmark=0):
             
             dset_L = 'validation',
             dset_U = 'validation',
-            dset_V = 'validation',
+            dset_V = None,
             ratio_L = 0.33,
             ratio_U = 0.33,
         
@@ -258,10 +258,10 @@ def basic():
             
             dset_L = 'validation',
             dset_U = 'test',
-            dset_V = 'train',
+            dset_V = 'validation',
             ratio_L = 1.0,
             ratio_U = 1.0,
-            ratio_V = 0.05,
+            ratio_V = 1.0,
         
             pretrain = 'final',
         

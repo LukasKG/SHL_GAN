@@ -108,7 +108,7 @@ def get_dataloader(params,X,Y,batch_size=None):
     else:
         dataset = torch.utils.data.TensorDataset(X)
     
-    if batch_size = None:
+    if batch_size == None:
         batch_size = params['batch_size']
     
     # Configure data loader

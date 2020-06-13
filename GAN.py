@@ -124,6 +124,7 @@ def train_GAN(params):
         C_Loss.cuda()
         floatTensor = torch.cuda.FloatTensor
         log("CUDA Training.",name=params['log_name'])
+        network.clear_cache()
     else:
         floatTensor = torch.FloatTensor
         log("CPU Training.",name=params['log_name'])
@@ -133,8 +134,9 @@ def train_GAN(params):
     #  Data scaling
     # -------------------
     '''
-    XTL ... Training data labelled
-    XTU ... Training data unlabelled
+    XTL ... Original labelled data
+    XTU ... Original unlabelled data
+    XTV ... Original validation data
     
     XL  ... Labelled data
     XU  ... Unlabelled data
@@ -153,19 +155,19 @@ def train_GAN(params):
         XTU, YTU = pp.get_data(params,dset_U)
     
     if dset_V is None:
-        XV, YV = XTU, YTU
+        XTV, YTV = XTU, YTU
     else:
-        XV, YV = pp.get_data(params,dset_V)
+        XTV, YTV = pp.get_data(params,dset_V)
     
     XTL = pp.scale_minmax(XTL)
     XTU = pp.scale_minmax(XTU)
     
-    
-    XV = pp.scale_minmax(XV)
+    XTV = pp.scale_minmax(XTV)
     if params['ratio_V'] < 1.0:
-        XV, YV = pp.select_random(XV,YV,params['ratio_L'])
+        XTV, YTV = pp.select_random(XTV,YTV,params['ratio_L'])
         log("Selected %s of validation samples."%( format(params['ratio_V'],'0.2f') ),name=params['log_name'])
-    XV, YV = pp.get_tensor(XV, YV)
+        
+    DL_V = pp.get_dataloader(params, XTV, YTV, batch_size=1024)
     
     # -------------------
     #  Load accuracy
@@ -187,7 +189,6 @@ def train_GAN(params):
     #  Start Training
     # -------------------
     
-    XF = None
     YF = None
     PF = None
     RF = None
@@ -207,9 +208,8 @@ def train_GAN(params):
         count_L = YL.shape[0]
         log("Number of labelled samples = %d."%( count_L ),name=params['log_name'])
         
-        dataloader = pp.get_dataloader(params, XL, YL)
+        DL_L = pp.get_dataloader(params, XL, YL)
         
-                
         # -------------------
         #  Unlabelled Data
         # -------------------
@@ -222,7 +222,7 @@ def train_GAN(params):
         
         log("Number of unlabelled samples = %d."%( XU.shape[0] ),name=params['log_name'])
 
-        iter_UL = pp.get_perm_dataloader(params, XU, YU)
+        DL_U_iter = pp.get_perm_dataloader(params, XU, YU)
         
         # -------------------
         #  Networks
@@ -275,7 +275,7 @@ def train_GAN(params):
                       XV, YV,  PV - Validation Data,    actual Labels,        predicted Labels (C)       | Validation samples
                   R1, F2, F3,  R4 - Real/Fake Labels
                 """
-                for i, data in enumerate(dataloader, 1):
+                for i, data in enumerate(DL_L, 1):
                     
                     loss_G = []
                     loss_D = []
@@ -317,7 +317,7 @@ def train_GAN(params):
                     #  Classify unlabelled data
                     # -------------------
                     optimizer_C.zero_grad()
-                    X2 = iter_UL.get_next()[0]
+                    X2 = DL_U_iter.get_next()[0]
                     Y2 = C(X2)
                     W2 = torch.cat((X2,Y2),dim=1)
 
@@ -345,7 +345,7 @@ def train_GAN(params):
                     # -------------------
                     #  Train the discriminator to label fake positive samples
                     # -------------------
-                    X4 = iter_UL.get_next()[0]
+                    X4 = DL_U_iter.get_next()[0]
                     Y4 = C(X4)
                     W4 = torch.cat((X4,Y4),dim=1)
                     
@@ -411,39 +411,54 @@ def train_GAN(params):
                 if (epoch+1)%params['save_step'] == 0:
                     idx = run,int(epoch/params['save_step'])+1
                     
-                    # Predict labels
-                    PV = C(XV)
-
-                    if params['R_active']:
-                        PR = R(XV)
-                        mat_accuracy_R[idx] = get_accuracy(PR, YV)
-                        network.save_Ref(params['name'],run,R)
-                        network.save_R_Acc(params, mat_accuracy_R)
+                    acc_D_real = []
+                    acc_D_vs_C = []
+                    acc_D_vs_G = []
+                    acc_C_real = []
                     
-                    # Generate Synthetic Data
-                    Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
-                    IV = torch.cat((Z,YV),dim=1)
-                    XG = G(IV)
+                    for data in DL_V:
+                        
+                        XV, YV = data
                     
-                    # Estimate Discriminator Accuracy
-                    WV1 = torch.cat((XV,YV),dim=1)
-                    WV2 = torch.cat((XV,PV),dim=1)
-                    WV3 = torch.cat((XG,YV),dim=1)
-                    RV1 = floatTensor(WV1.shape[0],1).fill_(1.0)
-                    FV2 = floatTensor(WV2.shape[0],1).fill_(0.0)
-                    FV3 = floatTensor(WV3.shape[0],1).fill_(0.0)
+                        # Predict labels
+                        PV = C(XV)
+    
+                        if params['R_active']:
+                            PR = R(XV)
+                            mat_accuracy_R[idx] = get_accuracy(PR, YV)
+                            network.save_Ref(params['name'],run,R)
+                            network.save_R_Acc(params, mat_accuracy_R)
+                        
+                        # Generate Synthetic Data
+                        Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
+                        IV = torch.cat((Z,YV),dim=1)
+                        XG = G(IV)
+                        
+                        # Estimate Discriminator Accuracy
+                        WV1 = torch.cat((XV,YV),dim=1)
+                        WV2 = torch.cat((XV,PV),dim=1)
+                        WV3 = torch.cat((XG,YV),dim=1)
+                        RV1 = floatTensor(WV1.shape[0],1).fill_(1.0)
+                        FV2 = floatTensor(WV2.shape[0],1).fill_(0.0)
+                        FV3 = floatTensor(WV3.shape[0],1).fill_(0.0)
+                        
+                        AV1 = D(WV1)
+                        AV2 = D(WV2)
+                        AV3 = D(WV3)
+                        
+                        acc_D_real.append(get_accuracy_binary(AV1,RV1))
+                        acc_D_vs_C.append(get_accuracy_binary(AV2,FV2))
+                        acc_D_vs_G.append(get_accuracy_binary(AV3,FV3))
                     
-                    AV1 = D(WV1)
-                    AV2 = D(WV2)
-                    AV3 = D(WV3)
-                    
-                    acc_D_real = get_accuracy_binary(AV1,RV1)
-                    acc_D_vs_C = get_accuracy_binary(AV2,FV2)
-                    acc_D_vs_G = get_accuracy_binary(AV3,FV3)
+                        acc_C_real.append(get_accuracy(PV, YV))
+ 
+                    acc_D_real = np.mean(acc_D_real)
+                    acc_D_vs_C = np.mean(acc_D_vs_C)
+                    acc_D_vs_G = np.mean(acc_D_vs_G)
                     acc_D = .5*acc_D_real + .25*acc_D_vs_G + .25*acc_D_vs_C
                     mat_accuracy_D[idx] = acc_D
                 
-                    acc_C_real = get_accuracy(PV, YV)
+                    acc_C_real = np.mean(acc_C_real)
                     acc_C_vs_D = 1.0 - acc_D_vs_C
                     acc_C = .5*acc_C_real + .5*acc_C_vs_D
                     mat_accuracy_C[idx] = acc_C_real
@@ -467,28 +482,30 @@ def train_GAN(params):
         # -------------------
         #  Post Run
         # -------------------
-                
-        # Generate Synthetic Data
-        Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
-        IV = torch.cat((Z,YV),dim=1)
-        XG = G(IV)
         
-        # Classify Validation data
-        PC = C(XV)
-        if params['R_active']:
-            if RF == None:
-                RF = R(XV)
-            else:
-                RF = torch.cat((RF, R(XV).detach()), 0)
+        for data in DL_V:
+                        
+            XV, YV = data
             
-        if XF == None:
-            XF = XG
-            YF = YV
-            PF = PC
-        else:
-            XF = torch.cat((XF, XG), 0)
-            YF = torch.cat((YF, YV), 0)
-            PF = torch.cat((PF, PC), 0)
+            # # Generate Synthetic Data
+            # Z = floatTensor(np.random.normal(0, 1, (YV.shape[0], params['noise_shape'])))
+            # IV = torch.cat((Z,YV),dim=1)
+            # XG = G(IV)
+            
+            # Classify Validation data
+            PC = C(XV)
+            if params['R_active']:
+                if RF == None:
+                    RF = R(XV)
+                else:
+                    RF = torch.cat((RF, R(XV).detach()), 0)
+                
+            if YF == None:
+                YF = YV
+                PF = PC
+            else:
+                YF = torch.cat((YF, YV), 0)
+                PF = torch.cat((PF, PC), 0)
         
         # -------------------
         #  Final prediction
