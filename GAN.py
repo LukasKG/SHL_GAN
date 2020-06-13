@@ -205,9 +205,6 @@ def train_GAN(params):
         
         count_L = YL.shape[0]
         log("Number of labelled samples = %d."%( count_L ),name=params['log_name'])
-        if params['oversampling']:
-            XL, YL = pp.over_sampling(params, XL, YL)
-            log("Oversampling: created %d new samples."%( XL.shape[0]-count_L ),name=params['log_name'])
         
         dataloader = pp.get_dataloader(params, XL, YL)
         
@@ -251,6 +248,11 @@ def train_GAN(params):
         # -------------------
         
         if run >= params['start_run']:
+            
+            if params['oversampling']:
+                XL, YL = pp.over_sampling(params, XL, YL)
+                log("Oversampling: created %d new labelled samples."%( XL.shape[0]-count_L ),name=params['log_name'])
+            
             for epoch in range(params['epochs']):
                 
                 # Jump to start epoch

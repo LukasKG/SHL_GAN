@@ -257,15 +257,15 @@ def basic():
             location = 'hips',
             
             dset_L = 'validation',
-            dset_U = 'validation',
-            dset_V = 'validation',
+            dset_U = 'test',
+            dset_V = 'train',
             ratio_L = 1.0,
             ratio_U = 1.0,
             ratio_V = 1.0,
         
             pretrain = 'final',
         
-            runs=1,
+            runs=5,
             epochs=100,
             save_step=10,
 
@@ -302,7 +302,7 @@ def pretrain():
         epochs=25,
         save_step=5,
 
-        oversampling = False,
+        oversampling = True,
 
         C_no = 1,
 
@@ -313,9 +313,10 @@ def pretrain():
 def main():
     # test()
     # test_cross()
-    # basic()
+    
     
     pretrain()
+    basic()
     
     # bmark_LR_G(last_bmark=0)
     # bmark_LR_D(last_bmark=0)
