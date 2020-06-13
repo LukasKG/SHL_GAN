@@ -97,7 +97,7 @@ class Permanent_Dataloader:
             data = next(self.iterator)
         return data
 
-def get_dataloader(params,X,Y):
+def get_dataloader(params,X,Y,batch_size=None):
     # transform to torch tensors
     if not torch.is_tensor(X):
         X, Y = get_tensor(X,Y)
@@ -108,10 +108,13 @@ def get_dataloader(params,X,Y):
     else:
         dataset = torch.utils.data.TensorDataset(X)
     
+    if batch_size = None:
+        batch_size = params['batch_size']
+    
     # Configure data loader
     dataloader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=params['batch_size'],
+        batch_size=batch_size,
         shuffle=True,
     )
     

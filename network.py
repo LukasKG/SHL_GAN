@@ -255,11 +255,9 @@ def load_GAN(run,params):
         D = new_D(run, params, input_size=input_size+output_size, hidden_size=128)
         
     # Load Classifier
-    C = None
-    if params['pretrain'] is not None:
+    C = load_Model(get_string_name(params['name'],run,'C'),params)
+    if C is None and params['pretrain'] is not None:
         C = load_Pretrain_C(run,params)
-    if C is None:
-        C = load_Model(get_string_name(params['name'],run,'C'),params)
     if C is None:
         C = new_C(run, params, input_size=input_size, hidden_size=128, num_classes=output_size)
         
@@ -270,10 +268,13 @@ def load_GAN(run,params):
 # -------------------
 
 def clear(name):
+    cleared = False
     for fname in os.listdir(M_PATH):
         if fname.startswith(name):
             os.remove(os.path.join(M_PATH, fname))
-    log("CLEARED MODEL \""+name+"\"",save=False)
+            cleared = True
+    if cleared:
+        log("CLEARED MODEL \""+name+"\"",save=False)
 
 # -------------------
 #  Save/Load Parameters

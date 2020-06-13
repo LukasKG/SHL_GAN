@@ -261,7 +261,7 @@ def basic():
             dset_V = 'train',
             ratio_L = 1.0,
             ratio_U = 1.0,
-            ratio_V = 1.0,
+            ratio_V = 0.05,
         
             pretrain = 'final',
         
@@ -315,7 +315,7 @@ def main():
     # test_cross()
     
     
-    pretrain()
+    # pretrain()
     basic()
     
     # bmark_LR_G(last_bmark=0)

@@ -105,8 +105,9 @@ def train_GAN(params):
     
     log(str(params),name=params['log_name'])
     
-    # # Clear remaining model
-    # network.clear(params['name']+'_R'+str(params['start_run']))
+    # Clear remaining model
+    if params['ratio_L'] < 1.0 or params['ratio_U'] < 1.0:
+        network.clear(params['name']+'_R'+str(params['start_run']))
     
     # -------------------
     #  CUDA
