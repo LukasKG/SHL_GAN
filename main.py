@@ -219,18 +219,18 @@ def test():
             FX_sel = 'basic',
             location = 'hips',
 
-            dset_L = 'validation',
-            dset_U = 'test',
-            dset_V = 'train',
-            ratio_L = 0.33,
-            ratio_U = 0.33,
-            ratio_V = 0.2,
+            dset_L = 'train',
+            dset_U = 'validation',
+            dset_V = 'validation',
+            ratio_L = 1,
+            ratio_U = 1,
+            ratio_V = 1,
         
             pretrain = 'final',
         
             runs=1,
-            epochs=6,
-            save_step=3,
+            epochs=10,
+            save_step=2,
 
             oversampling = True,
 
@@ -247,6 +247,7 @@ def test():
     
  
     train(params=params)
+    GAN.get_prediction_accuracy(params)
 
 def basic():
     name = "Val_Val"    
@@ -266,7 +267,7 @@ def basic():
             pretrain = 'pretrain',
         
             runs=5,
-            epochs=200,
+            epochs=50,
             save_step=2,
 
             oversampling = True,
@@ -278,8 +279,7 @@ def basic():
             
             G_no = 1,
             D_no = 1,
-            C_no = 1,
-            
+            C_no = 1, 
             
             log_name = 'log')
  
@@ -314,13 +314,12 @@ def main():
     # test()
     # test_cross()
     
-    
-    # pretrain()
-    # basic()
-    
     # bmark_LR_G(last_bmark=0)
     # bmark_LR_D(last_bmark=0)
     bmark_LR_C(last_bmark=0)
+    
+    # pretrain()
+    basic()
     
 
 if __name__ == "__main__":

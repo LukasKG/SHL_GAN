@@ -11,13 +11,12 @@ import numpy as np
 import preprocessing as pp
 
 P_PATH = 'pic/'
-os.makedirs("pic", exist_ok=True)
-
 M_PATH = 'models/'
-os.makedirs("models", exist_ok=True)
-
 S_PATH = 'prediction/'
-os.makedirs("prediction", exist_ok=True)
+
+def make_dir_pic():os.makedirs(P_PATH, exist_ok=True)
+def make_dir_mod():os.makedirs(M_PATH, exist_ok=True)
+def make_dir_pre():os.makedirs(S_PATH, exist_ok=True)
 
 # File format for vector graphics
 FILE_FORMAT_V = '.pdf'
@@ -26,6 +25,7 @@ FILE_FORMAT_V = '.pdf'
 FILE_FORMAT_P = '.png'
 
 def save_fig(params,name,fig):
+    make_dir_pic()
     if params['name'][-1] == '/':
         path = P_PATH+params['name']+name
     else:
@@ -175,6 +175,7 @@ def get_string_name(name,run,model):
     return '%s_R%d_%s'%(name,run,model)
 
 def save_Model(name,model):
+    make_dir_mod()
     PATH = M_PATH+name+'.pt'
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -269,10 +270,11 @@ def load_GAN(run,params):
 
 def clear(name):
     cleared = False
-    for fname in os.listdir(M_PATH):
-        if fname.startswith(name):
-            os.remove(os.path.join(M_PATH, fname))
-            cleared = True
+    if os.path.isdir(M_PATH):
+        for fname in os.listdir(M_PATH):
+            if fname.startswith(name):
+                os.remove(os.path.join(M_PATH, fname))
+                cleared = True
     if cleared:
         log("CLEARED MODEL \""+name+"\"",save=False)
 
@@ -285,6 +287,7 @@ def clear_cache():
 # -------------------
         
 def save_Parameter(params):
+    make_dir_mod()
     PATH = M_PATH+params['name']+'_params.pt'
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -303,6 +306,7 @@ def load_Parameter(name):
 # -------------------
 
 def save_G_Diff(params,mat):
+    make_dir_mod()
     PATH = M_PATH+params['name']+'_diff_G.pt'
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -325,6 +329,7 @@ def load_G_Diff(params):
 # -------------------
 
 def save_R_Acc(params,mat_R):
+    make_dir_mod()
     PATH = M_PATH+params['name']+'_acc_R.pt'
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -346,6 +351,7 @@ def load_R_Acc(params):
     return mat_R
 
 def save_Acc(params,mat_G,mat_D,mat_C):
+    make_dir_mod()
     PATH = M_PATH+params['name']+'_acc.pt'
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

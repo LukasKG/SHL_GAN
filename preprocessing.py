@@ -69,6 +69,13 @@ def get_data(params,dataset):
         Y = labels_to_one_hot(params,Y)
     return X,Y
 
+def get_prediction(params,src_path):
+    pred = ds.read_prediction(params,src_path)
+    if pred is not None:
+        return labels_to_one_hot(params,pred)
+    else:
+        return None
+
 def get_tensor(X, Y=None):    
     cuda = True if torch.cuda.is_available() else False
     

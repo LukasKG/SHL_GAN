@@ -131,6 +131,13 @@ def generate_data(dataset,location,FX_sel):
         df = pd.DataFrame(data=labels, index=None, columns=None)
         df.to_csv(tar_path+'label.txt',header=False,index=False)
 
+def read_prediction(params,src_path):
+    if os.path.isfile(src_path):
+        return pd.read_csv(src_path,sep=' ',header=None).to_numpy()[:,0]
+    else:
+        log("Can't find predictions for model %s."%(params['name']),name=params['log_name'])
+        return None
+        
 def load_FX(FX_sel):
     from GAN import get_params
     params = get_params(FX_sel=FX_sel)

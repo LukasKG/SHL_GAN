@@ -81,6 +81,15 @@ def get_params(**kwargs):
     return params
         
 
+def get_prediction_accuracy(params):
+    pred = pp.get_prediction(params,network.S_PATH+params['name']+'_predictions.txt')
+    _, Y = pp.get_data(params,params['dset_U'])
+    if pred is not None and Y is not None:
+        pred, Y = pp.get_tensor(pred, Y)
+        acc = get_accuracy(pred, Y)
+        
+        log("Predicted Accuracy: %f."%( acc ),name=params['log_name'])
+
 def get_accuracy(prediction,label):
     _, idx_C = label.max(1)
     _, idx_P = prediction.max(1)
@@ -622,6 +631,7 @@ def train_GAN(params):
     # -------------------  
     
     if(params['prediction']):
+        network.make_dir_pre()
         pred = torch.argmax(Y_pred,axis=1)        
         f = open(network.S_PATH+params['name']+'_predictions.txt', "w")
         for y in pred:
