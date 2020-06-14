@@ -117,7 +117,7 @@ def test_cross():
             G_label_sample = True,
             G_label_factor = 1,
             C_basic_train = True ,
-            R_active = True,
+            R_active = False,
             
             G_no = 1,
             D_no = 1,
@@ -152,8 +152,8 @@ def cross_params(net,lst_1,lst_2,last_bmark=0):
             dset_L = 'validation',
             dset_U = 'validation',
             dset_V = None,
-            ratio_L = 0.33,
-            ratio_U = 0.33,
+            ratio_L = 0.5,
+            ratio_U = 0.5,
         
             runs=5,
             epochs=150,
@@ -197,8 +197,8 @@ def bmark_LR_G(last_bmark=0):
 def bmark_LR_D(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Discriminator Optimiser"""
     net = 'D'
-    lst_1 = [0.011125,0.01125,0.01137]
-    lst_2 = [0.65,0.7,0.75]
+    lst_1 = [0.011125,0.01125,0.01137,0.015]
+    lst_2 = [0.725,0.75,0.775]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
@@ -249,7 +249,7 @@ def test():
     train(params=params)
 
 def basic():
-    name = "basic"    
+    name = "Val_Val"    
     
     params = get_params(
             name = name,
@@ -263,11 +263,11 @@ def basic():
             ratio_U = 1.0,
             ratio_V = 1.0,
         
-            pretrain = 'final',
+            pretrain = 'pretrain',
         
             runs=5,
-            epochs=100,
-            save_step=10,
+            epochs=200,
+            save_step=2,
 
             oversampling = True,
 
@@ -316,11 +316,11 @@ def main():
     
     
     # pretrain()
-    basic()
+    # basic()
     
     # bmark_LR_G(last_bmark=0)
     # bmark_LR_D(last_bmark=0)
-    # bmark_LR_C(last_bmark=0)
+    bmark_LR_C(last_bmark=0)
     
 
 if __name__ == "__main__":

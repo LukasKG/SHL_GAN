@@ -51,8 +51,8 @@ DEFAULT_PARAMS = {
         'GLR'             : 0.0013,
         'GB1'             : 0.2,
         'GB2'             : 0.999,
-        'DLR'             : 0.001125,
-        'DB1'             : 0.7,
+        'DLR'             : 0.01137,
+        'DB1'             : 0.75,
         'DB2'             : 0.999,
         'CLR'             : 0.00225,
         'CB1'             : 0.9,
@@ -108,6 +108,7 @@ def train_GAN(params):
     # Clear remaining model
     if params['ratio_L'] < 1.0 or params['ratio_U'] < 1.0:
         network.clear(params['name']+'_R'+str(params['start_run']))
+    plt.close('all')
     
     # -------------------
     #  CUDA
