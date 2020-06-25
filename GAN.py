@@ -31,7 +31,7 @@ DEFAULT_PARAMS = {
         
         'FX_sel'          : 'basic',
         'location'        : 'hips',
-        'prediction'      : True,
+        'prediction'      : False,
         'pretrain'        : None,
         
         'oversampling'    : True,
@@ -48,13 +48,13 @@ DEFAULT_PARAMS = {
         'C_basic_train'   : True,
         'R_active'        : True,
         
-        'GLR'             : 0.0013,
-        'GB1'             : 0.2,
+        'GLR'             : 0.0005,
+        'GB1'             : 0.5,
         'GB2'             : 0.999,
-        'DLR'             : 0.01137,
+        'DLR'             : 0.0125,
         'DB1'             : 0.75,
         'DB2'             : 0.999,
-        'CLR'             : 0.00225,
+        'CLR'             : 0.003,
         'CB1'             : 0.9,
         'CB2'             : 0.999,
         }

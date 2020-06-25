@@ -7,6 +7,7 @@ Created on Tue Jun  2 17:55:35 2020
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 from network import save_fig
 
@@ -50,16 +51,29 @@ def plot_spectrum(dset, loc, name):
     acc = get_acc(data)
     channel = 'Acceleration'
     
+    cmap = plt.get_cmap('gnuplot')
+    indices = np.linspace(0, cmap.N, 7)
+    colors = [cmap(int(i)) for i in indices]
+    plt.rcParams.update({'font.size': 18})
+    plt.rcParams.update({'figure.autolayout': True})
+    
     fig, ax = plt.subplots()
     ax.set_title(channel)
     ax.grid()
     
-    ax.plot(test_acc_mag[1:25],alpha=0.8)
-    ax.plot(get_mean_mag(acc)[1:25],alpha=0.8)
+    ax.plot(test_acc_mag[1:25],c=colors[0],linestyle='solid')
+    ax.plot(get_mean_mag(acc)[1:25],c=colors[1],linestyle='dashed')
     ax.legend(['$test$',name])
     ax.set_yscale('log')
+    
+    ax.set_xlabel('Hz')
+    ax.set_ylabel('Spectral Power')
+    ax.set_ylim(10**1,10**2.5)
+    
+    #plt.tight_layout()
     save_fig(params,channel,fig)
     plt.close("all")
+    mpl.rcParams.update(mpl.rcParamsDefault)
     
 params = GAN.get_params(name='spectrum',log_name='spectrum')
 #channel_selection = range(len(DATA_FILES))

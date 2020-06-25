@@ -189,24 +189,24 @@ def cross_params(net,lst_1,lst_2,last_bmark=0):
 def bmark_LR_G(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Generator Optimiser"""
     net = 'G'
-    lst_1 = [0.00125,0.0013,0.00135]
-    lst_2 = [0.15,0.2,0.25]
+    lst_1 = [0.00025,0.0005,0.00075,0.003]
+    lst_2 = [0.1,0.4,0.5,0.6,0.9]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
 def bmark_LR_D(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Discriminator Optimiser"""
     net = 'D'
-    lst_1 = [0.011125,0.01125,0.01137,0.015]
-    lst_2 = [0.725,0.75,0.775]
+    lst_1 = [0.01,0.0125,0.15]
+    lst_2 = [0.7,0.75,0.8,0.85]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
 def bmark_LR_C(last_bmark=0):
     """benchmark different Learning Rates and Beta1 Decays for the Classifier Optimiser"""
     net = 'C'
-    lst_1 = [0.002125,0.00225,0.00237]
-    lst_2 = [0.7,0.8,0.9]
+    lst_1 = [0.002,0.003,0.004,0.005]
+    lst_2 = [0.3,0.6,0.9]
     
     cross_params(net,lst_1,lst_2,last_bmark)
 
@@ -225,7 +225,8 @@ def test():
             ratio_L = 1,
             ratio_U = 1,
             ratio_V = 1,
-        
+            
+            prediction = True,
             pretrain = 'final',
         
             runs=1,
@@ -250,23 +251,23 @@ def test():
     GAN.get_prediction_accuracy(params)
 
 def basic():
-    name = "Val_Val"    
+    name = "final"    
     
     params = get_params(
             name = name,
             FX_sel = 'basic',
             location = 'hips',
-            
             dset_L = 'validation',
             dset_U = 'test',
             dset_V = 'validation',
             ratio_L = 1.0,
             ratio_U = 1.0,
             ratio_V = 1.0,
-        
+            
+            prediction = True,
             pretrain = 'pretrain',
         
-            runs=5,
+            runs=20,
             epochs=50,
             save_step=2,
 
@@ -314,9 +315,10 @@ def main():
     # test()
     # test_cross()
     
+    # bmark_LR_C(last_bmark=0)
     # bmark_LR_G(last_bmark=0)
     # bmark_LR_D(last_bmark=0)
-    bmark_LR_C(last_bmark=0)
+    
     
     # pretrain()
     basic()
