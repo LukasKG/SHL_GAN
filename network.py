@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import os
 import warnings
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 
 from log import log
 
@@ -31,8 +33,11 @@ def save_fig(params,name,fig):
     else:
         path = P_PATH+params['name']+'_'+name
     os.makedirs(path.rsplit('/', 1)[0], exist_ok=True)
+    plt.rcParams.update({'figure.autolayout': True})
+    plt.tight_layout()
     fig.savefig( path+FILE_FORMAT_V, dpi=300 )
     fig.savefig( path+FILE_FORMAT_P, dpi=300 )
+    mpl.rcParams.update(mpl.rcParamsDefault)
 
 # -------------------
 #  Generator

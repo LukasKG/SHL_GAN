@@ -32,6 +32,7 @@ DEFAULT_PARAMS = {
         'FX_sel'          : 'basic',
         'location'        : 'hips',
         'prediction'      : False,
+        'evaluate'        : False,
         'pretrain'        : None,
         
         'oversampling'    : True,
@@ -91,8 +92,9 @@ def get_prediction_accuracy(params):
         log("Predicted Accuracy: %f."%( acc ),name=params['log_name'])
 
 def get_accuracy(prediction,label):
-    _, idx_C = label.max(1)
-    _, idx_P = prediction.max(1)
+    C, P = pp.get_tensor(prediction,label)
+    _, idx_C = C.max(1)
+    _, idx_P = P.max(1)
     
     cases = list(label.size())[0]
     correct = list(torch.where(idx_C==idx_P)[0].size())[0]
@@ -539,8 +541,11 @@ def train_GAN(params):
     # -------------------
     
     acc_G = np.mean(mat_accuracy_G,axis=0)
+    std_G = np.std(mat_accuracy_G,axis=0)
     acc_D = np.mean(mat_accuracy_D,axis=0)
+    std_D = np.std(mat_accuracy_D,axis=0)
     acc_C = np.mean(mat_accuracy_C,axis=0)
+    std_C = np.std(mat_accuracy_C,axis=0)
     if params['R_active']:
         acc_R = np.mean(mat_accuracy_R,axis=0)
         
@@ -552,12 +557,15 @@ def train_GAN(params):
     colors = [cmap(int(i)) for i in indices]
 
     ax.plot(timeline,acc_C,c=colors[0],linestyle='solid')
+    ax.fill_between(timeline, acc_C-std_C, acc_C+std_C, alpha=0.3, facecolor=colors[0])
     legend.append("Accuracy $A_C$")
     
     ax.plot(timeline,acc_D,c=colors[1],linestyle='dashed')
+    ax.fill_between(timeline, acc_D-std_D, acc_D+std_D, alpha=0.3, facecolor=colors[1])
     legend.append("Accuracy $A_D$")
     
     ax.plot(timeline,acc_G,c=colors[2],linestyle='dotted')
+    ax.fill_between(timeline, acc_G-std_G, acc_G+std_G, alpha=0.3, facecolor=colors[2])
     legend.append("Accuracy $A_G$")
     
     Y_max = 1.15
@@ -575,9 +583,9 @@ def train_GAN(params):
     ax.set_xlim(0.0,params['epochs'])
     ax.set_ylim(0.0,Y_max)
     
-    ax.legend(legend)
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Accuracy')
+    ax.legend(legend,fontsize=20)
+    ax.set_xlabel('Epoch',fontsize=20)
+    ax.set_ylabel('Accuracy',fontsize=20)
         
     ax.grid()
     save_fig(params,'eval',fig)
@@ -612,6 +620,15 @@ def train_GAN(params):
         log(' - Biggest Advantage: %d epochs after %d epochs.'%(adva[maxA]*params['save_step'],timeline[maxA]),name='results')  
     
     # -------------------
+    #  Log Results
+    # -------------------
+    
+    if params['evaluate']:
+        log(" - %s ( %s | %s ): [C acc: %f]"%(params['name'],params['dset_V'],params['location'],get_accuracy(PF, YF)),name='results')
+    else:
+        log(" - "+params['name']+": [C acc: %f ( ± %f )] [D acc: %f ( ± %f )] [G acc: %f ( ± %f )]"%(acc_C[-1],std_C[-1],acc_D[-1],std_D[-1],acc_G[-1],std_G[-1]),name='results')
+    
+    # -------------------
     #  Generate Confusion Matrix
     # -------------------
       
@@ -619,7 +636,10 @@ def train_GAN(params):
     PF = pp.one_hot_to_labels(params,PF)
     
     con_mat = confusion_matrix(YF, PF, labels=None, sample_weight=None, normalize='true')
-    plot_confusion_matrix(con_mat,params,name='C',title='Confusion matrix')
+    if params['evaluate']:
+        plot_confusion_matrix(con_mat,params,name='%s_%s'%(params['dset_V'],params['location']),title='Confusion matrix')
+    else:
+        plot_confusion_matrix(con_mat,params,name='C',title='Confusion matrix')
     
     if params['R_active']:
         RF = pp.one_hot_to_labels(params,RF)
@@ -638,12 +658,6 @@ def train_GAN(params):
             f.write(' '.join(['%.6f'%(float(y.item()+1))]*500)+'\n')
         f.close()
     
-    # -------------------
-    #  Log Results
-    # -------------------
-    
-    log(" - "+params['name']+": [C acc: %f] [D acc: %f] [G acc: %f]"%(acc_C[-1],acc_D[-1],acc_G[-1]),name='results')
-    
 if __name__ == "__main__":
     import main
-    main.test()
+    main.main()

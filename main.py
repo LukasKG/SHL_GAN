@@ -31,6 +31,7 @@ def train(params,data=None):
         FX_sel          -       List of features to apply to the sliding window
         Location        -       Which body locations (bag, hand, hips, torso, or all)
         prediction      -       True: creates a file containing the prediction for the validation data
+        evaluate        -       True: Evaluate different loc/dset than trained on
         pretrain        -       If given: Name of the pretrained model to be loaded
         
         oversampling    -       True: oversample all minority classes
@@ -286,6 +287,48 @@ def basic():
  
     train(params=params)
 
+def evaluate():
+    name = "final"    
+    locations = ['bag','hand','hips','torso']
+    datasets = ['train','validation']
+    
+    for dset in datasets:
+        for loc in locations:
+        
+            params = get_params(
+                    name = name,
+                    FX_sel = 'basic',
+                    location = loc,
+                    dset_L = 'validation',
+                    dset_U = 'test',
+                    dset_V = dset,
+                    ratio_L = 1.0,
+                    ratio_U = 1.0,
+                    ratio_V = 1.0,
+                    
+                    prediction = False,
+                    evaluate = True,
+                    pretrain = 'pretrain',
+                
+                    runs=10,
+                    epochs=50,
+                    save_step=2,
+        
+                    oversampling = True,
+        
+                    G_label_sample = True,
+                    G_label_factor = 1,
+                    C_basic_train = True ,
+                    R_active = False,
+                    
+                    G_no = 1,
+                    D_no = 1,
+                    C_no = 1, 
+                    
+                    log_name = 'log')
+         
+            train(params=params)
+
 def pretrain():
     name = 'pretrain'
     
@@ -310,7 +353,12 @@ def pretrain():
         log_name = 'log')
  
     train_C(params=params)
-    
+ 
+def rerun():
+    train(params=get_params(name = "final"))
+    train(params=get_params(name = "Val_Val"))
+    train(params=get_params(name = "Val_Train"))
+ 
 def main():
     # test()
     # test_cross()
@@ -322,6 +370,8 @@ def main():
     
     # pretrain()
     basic()
+    # evaluate()
+    # rerun()
     
 
 if __name__ == "__main__":

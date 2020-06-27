@@ -76,17 +76,18 @@ def get_prediction(params,src_path):
     else:
         return None
 
-def get_tensor(X, Y=None):    
-    cuda = True if torch.cuda.is_available() else False
-    
-    if cuda:
-        device = torch.device('cuda')
-    else:
-        device = torch.device('cpu')
-    
-    X = torch.from_numpy(X).float().to(device)
-    if Y is not None:
-        Y = torch.from_numpy(Y).float().to(device)
+def get_tensor(X, Y=None):
+    if not torch.is_tensor(X):
+        cuda = True if torch.cuda.is_available() else False
+        
+        if cuda:
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+        
+        X = torch.from_numpy(X).float().to(device)
+        if Y is not None:
+            Y = torch.from_numpy(Y).float().to(device)
     
     return X, Y
 
