@@ -495,6 +495,8 @@ def train_GAN(params):
         #  Post Run
         # -------------------
         
+        acc_C_real = []
+        
         for data in DL_V:
                         
             XV, YV = data
@@ -506,6 +508,8 @@ def train_GAN(params):
             
             # Classify Validation data
             PC = C(XV)
+            acc_C_real.append(get_accuracy(PC, YV))
+            
             if params['R_active']:
                 if RF == None:
                     RF = R(XV)
@@ -518,6 +522,8 @@ def train_GAN(params):
             else:
                 YF = torch.cat((YF, YV), 0)
                 PF = torch.cat((PF, PC), 0)
+                
+        mat_accuracy_C[run] = np.mean(acc_C_real)
         
         # -------------------
         #  Final prediction
@@ -624,7 +630,7 @@ def train_GAN(params):
     # -------------------
     
     if params['evaluate']:
-        log(" - %s ( %s | %s ): [C acc: %f]"%(params['name'],params['dset_V'],params['location'],get_accuracy(PF, YF)),name='results')
+        log(" - %s ( %s | %s ):  [C acc: %f ( ± %f )]"%(params['name'],params['dset_V'],params['location'],acc_C[-1],std_C[-1]),name='results')
     else:
         log(" - "+params['name']+": [C acc: %f ( ± %f )] [D acc: %f ( ± %f )] [G acc: %f ( ± %f )]"%(acc_C[-1],std_C[-1],acc_D[-1],std_D[-1],acc_G[-1],std_G[-1]),name='results')
     
